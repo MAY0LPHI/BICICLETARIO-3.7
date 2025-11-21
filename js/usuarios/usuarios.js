@@ -5,17 +5,52 @@
 
 import { Auth } from '../shared/auth.js';
 import { Modals } from '../shared/modals.js';
+import { AuditLogger } from '../shared/audit-logger.js';
+import { Utils } from '../shared/utils.js';
 
 export class Usuarios {
     static init() {
+        const usersTab = document.getElementById('usuarios-tab-content');
+        if (!usersTab) return;
+        
         this.renderUserList();
         this.setupEventListeners();
+        
+        if (document.getElementById('audit-logs-list')) {
+            this.initAuditReport();
+        }
     }
 
     static setupEventListeners() {
         const addUserBtn = document.getElementById('add-user-btn');
         if (addUserBtn) {
             addUserBtn.addEventListener('click', () => this.showAddUserModal());
+        }
+
+        const auditStartDate = document.getElementById('audit-start-date');
+        const auditEndDate = document.getElementById('audit-end-date');
+        const auditUserFilter = document.getElementById('audit-user-filter');
+        const auditClearFilters = document.getElementById('audit-clear-filters');
+        const exportAuditCSV = document.getElementById('export-audit-csv');
+        const exportAuditPDF = document.getElementById('export-audit-pdf');
+
+        if (auditStartDate) {
+            auditStartDate.addEventListener('change', () => this.applyAuditFilters());
+        }
+        if (auditEndDate) {
+            auditEndDate.addEventListener('change', () => this.applyAuditFilters());
+        }
+        if (auditUserFilter) {
+            auditUserFilter.addEventListener('change', () => this.applyAuditFilters());
+        }
+        if (auditClearFilters) {
+            auditClearFilters.addEventListener('click', () => this.clearAuditFilters());
+        }
+        if (exportAuditCSV) {
+            exportAuditCSV.addEventListener('click', () => this.exportAuditToCSV());
+        }
+        if (exportAuditPDF) {
+            exportAuditPDF.addEventListener('click', () => this.exportAuditToPDF());
         }
     }
 
@@ -550,6 +585,296 @@ export class Usuarios {
         } catch (error) {
             Modals.alert(error.message, 'Erro de Permissão');
         }
+    }
+
+    static initAuditReport() {
+        const userFilter = document.getElementById('audit-user-filter');
+        if (!userFilter) return;
+
+        const users = Auth.getAllUsers();
+        userFilter.innerHTML = '<option value="todos">Todos os usuários</option>' +
+            users.map(user => `<option value="${user.id}">${user.nome} (@${user.username})</option>`).join('');
+
+        const endDate = document.getElementById('audit-end-date');
+        if (endDate && !endDate.value) {
+            endDate.value = new Date().toISOString().split('T')[0];
+        }
+
+        const startDate = document.getElementById('audit-start-date');
+        if (startDate && !startDate.value) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            startDate.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        this.renderAuditLogs();
+    }
+
+    static applyAuditFilters() {
+        this.renderAuditLogs();
+    }
+
+    static clearAuditFilters() {
+        const startDate = document.getElementById('audit-start-date');
+        const endDate = document.getElementById('audit-end-date');
+        const userFilter = document.getElementById('audit-user-filter');
+        
+        if (startDate) startDate.value = '';
+        if (endDate) endDate.value = '';
+        if (userFilter) userFilter.value = 'todos';
+        
+        this.renderAuditLogs();
+    }
+
+    static renderAuditLogs() {
+        const container = document.getElementById('audit-logs-list');
+        if (!container) return;
+
+        const startDate = document.getElementById('audit-start-date')?.value;
+        const endDate = document.getElementById('audit-end-date')?.value;
+        const userId = document.getElementById('audit-user-filter')?.value;
+
+        const logs = AuditLogger.getLogsByFilter({
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            userId: userId !== 'todos' ? userId : undefined
+        });
+
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                    <p>Nenhum log encontrado para os filtros selecionados</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        const tableHTML = `
+            <table class="w-full text-sm">
+                <thead class="text-left bg-slate-50 dark:bg-slate-700/40 sticky top-0">
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <th class="font-semibold text-slate-600 dark:text-slate-300 p-3">Data/Hora</th>
+                        <th class="font-semibold text-slate-600 dark:text-slate-300 p-3">Usuário</th>
+                        <th class="font-semibold text-slate-600 dark:text-slate-300 p-3">Ação</th>
+                        <th class="font-semibold text-slate-600 dark:text-slate-300 p-3">Entidade</th>
+                        <th class="font-semibold text-slate-600 dark:text-slate-300 p-3">Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${logs.map(log => {
+                        const date = new Date(log.timestamp);
+                        const dateStr = date.toLocaleDateString('pt-BR');
+                        const timeStr = date.toLocaleTimeString('pt-BR');
+                        
+                        const actionIcon = this.getActionIcon(log.action);
+                        const actionLabel = AuditLogger.getActionLabel(log.action);
+                        const entityLabel = AuditLogger.getEntityLabel(log.entity);
+                        const details = AuditLogger.formatLogDetails(log);
+
+                        return `
+                            <tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <td class="p-3 align-top">
+                                    <div class="text-slate-800 dark:text-slate-100">${dateStr}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">${timeStr}</div>
+                                </td>
+                                <td class="p-3 align-top">
+                                    <div class="font-medium text-slate-800 dark:text-slate-100">${log.username}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">${log.userTipo}</div>
+                                </td>
+                                <td class="p-3 align-top">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${this.getActionBadgeClass(log.action)}">
+                                        <i data-lucide="${actionIcon}" class="w-3 h-3 mr-1"></i>
+                                        ${actionLabel}
+                                    </span>
+                                </td>
+                                <td class="p-3 align-top text-slate-700 dark:text-slate-300">${entityLabel}</td>
+                                <td class="p-3 align-top text-sm text-slate-600 dark:text-slate-400">${details}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = tableHTML;
+        lucide.createIcons();
+    }
+
+    static getActionIcon(action) {
+        const icons = {
+            'create': 'plus-circle',
+            'edit': 'edit',
+            'delete': 'trash-2',
+            'register_entry': 'log-in',
+            'register_exit': 'log-out',
+            'remove_access': 'user-x',
+            'change_entry_time': 'clock',
+            'overnight_stay': 'moon',
+            'export': 'download',
+            'import': 'upload',
+            'login': 'log-in',
+            'logout': 'log-out',
+            'change_password': 'key',
+            'activate': 'check-circle',
+            'deactivate': 'x-circle',
+            'change_theme': 'palette'
+        };
+        return icons[action] || 'activity';
+    }
+
+    static getActionBadgeClass(action) {
+        const classes = {
+            'create': 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300',
+            'edit': 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300',
+            'delete': 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300',
+            'register_entry': 'bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300',
+            'register_exit': 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300',
+            'login': 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300',
+            'logout': 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+            'change_password': 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
+        };
+        return classes[action] || 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+    }
+
+    static exportAuditToCSV() {
+        const startDate = document.getElementById('audit-start-date')?.value;
+        const endDate = document.getElementById('audit-end-date')?.value;
+        const userId = document.getElementById('audit-user-filter')?.value;
+
+        const logs = AuditLogger.getLogsByFilter({
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            userId: userId !== 'todos' ? userId : undefined
+        });
+
+        if (logs.length === 0) {
+            Modals.alert('Nenhum log para exportar');
+            return;
+        }
+
+        const headers = ['Data', 'Hora', 'Usuário', 'Tipo', 'Ação', 'Entidade', 'Detalhes'];
+        const rows = logs.map(log => {
+            const date = new Date(log.timestamp);
+            return [
+                date.toLocaleDateString('pt-BR'),
+                date.toLocaleTimeString('pt-BR'),
+                log.username,
+                log.userTipo,
+                AuditLogger.getActionLabel(log.action),
+                AuditLogger.getEntityLabel(log.entity),
+                AuditLogger.formatLogDetails(log)
+            ];
+        });
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `relatorio_auditoria_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        Modals.alert('Relatório exportado com sucesso!', 'Sucesso');
+    }
+
+    static exportAuditToPDF() {
+        const startDate = document.getElementById('audit-start-date')?.value;
+        const endDate = document.getElementById('audit-end-date')?.value;
+        const userId = document.getElementById('audit-user-filter')?.value;
+
+        const logs = AuditLogger.getLogsByFilter({
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            userId: userId !== 'todos' ? userId : undefined
+        });
+
+        if (logs.length === 0) {
+            Modals.alert('Nenhum log para exportar');
+            return;
+        }
+
+        const reportTitle = 'Relatório de Auditoria';
+        const reportDate = new Date().toLocaleDateString('pt-BR');
+        
+        let htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #1e40af; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                    th { background-color: #f1f5f9; padding: 10px; text-align: left; border: 1px solid #cbd5e1; }
+                    td { padding: 8px; border: 1px solid #e2e8f0; }
+                    tr:nth-child(even) { background-color: #f8fafc; }
+                    .header { margin-bottom: 20px; }
+                    .filters { background-color: #f1f5f9; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${reportTitle}</h1>
+                    <p>Gerado em: ${reportDate}</p>
+                </div>
+                <div class="filters">
+                    <strong>Filtros aplicados:</strong><br>
+                    ${startDate ? `Data início: ${new Date(startDate).toLocaleDateString('pt-BR')}<br>` : ''}
+                    ${endDate ? `Data fim: ${new Date(endDate).toLocaleDateString('pt-BR')}<br>` : ''}
+                    ${userId && userId !== 'todos' ? `Usuário: ${logs[0]?.username || 'N/A'}<br>` : 'Todos os usuários<br>'}
+                    Total de registros: ${logs.length}
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Hora</th>
+                            <th>Usuário</th>
+                            <th>Tipo</th>
+                            <th>Ação</th>
+                            <th>Entidade</th>
+                            <th>Detalhes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${logs.map(log => {
+                            const date = new Date(log.timestamp);
+                            return `
+                                <tr>
+                                    <td>${date.toLocaleDateString('pt-BR')}</td>
+                                    <td>${date.toLocaleTimeString('pt-BR')}</td>
+                                    <td>${log.username}</td>
+                                    <td>${log.userTipo}</td>
+                                    <td>${AuditLogger.getActionLabel(log.action)}</td>
+                                    <td>${AuditLogger.getEntityLabel(log.entity)}</td>
+                                    <td>${AuditLogger.formatLogDetails(log)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+
+        Modals.alert('Janela de impressão aberta! Use "Salvar como PDF" nas opções de impressão.', 'Informação');
     }
 }
 

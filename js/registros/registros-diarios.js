@@ -2,6 +2,7 @@ import { Utils } from '../shared/utils.js';
 import { Storage } from '../shared/storage.js';
 import { Modals } from '../shared/modals.js';
 import { Auth } from '../shared/auth.js';
+import { logAction } from '../shared/audit-logger.js';
 
 export class RegistrosManager {
     constructor(app) {
@@ -89,6 +90,14 @@ export class RegistrosManager {
             this.app.data.registros.push(newRegistro);
             await Storage.saveRegistros(this.app.data.registros);
             
+            logAction('register_entry', 'registro', newRegistro.id, {
+                cliente: client.nome,
+                clienteCpf: client.cpf,
+                modelo: bike.modelo,
+                marca: bike.marca,
+                dataHoraEntrada: newRegistro.dataHoraEntrada
+            });
+            
             this.app.bicicletasManager.renderClientDetails();
             if (this.app.data.activeTab === 'registros-diarios') {
                 this.renderDailyRecords();
@@ -170,6 +179,17 @@ export class RegistrosManager {
         if (registro && !registro.dataHoraSaida) {
             registro.dataHoraSaida = new Date().toISOString();
             await Storage.saveRegistros(this.app.data.registros);
+            
+            const client = this.app.data.clients.find(c => c.id === registro.clientId);
+            logAction('register_exit', 'registro', registroId, {
+                cliente: client?.nome || 'Desconhecido',
+                clienteCpf: client?.cpf || '',
+                modelo: registro.bikeSnapshot.modelo,
+                marca: registro.bikeSnapshot.marca,
+                dataHoraEntrada: registro.dataHoraEntrada,
+                dataHoraSaida: registro.dataHoraSaida
+            });
+            
             this.renderDailyRecords();
             this.app.bicicletasManager.renderClientDetails();
         }

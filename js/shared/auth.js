@@ -4,6 +4,7 @@
  */
 
 import { Storage } from './storage.js';
+import { logAction } from './audit-logger.js';
 
 const STORAGE_KEY_USERS = 'bicicletario_users';
 const STORAGE_KEY_SESSION = 'bicicletario_session';
@@ -196,10 +197,26 @@ export class Auth {
             loginTime: new Date().toISOString()
         };
         localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+        
+        setTimeout(() => {
+            logAction('login', 'usuario', user.id, { 
+                username: user.username,
+                nome: user.nome,
+                tipo: user.tipo
+            });
+        }, 100);
+        
         return { success: true, user: session };
     }
 
     static logout() {
+        const session = this.getCurrentSession();
+        if (session) {
+            logAction('logout', 'usuario', session.userId, {
+                username: session.username,
+                nome: session.nome
+            });
+        }
         localStorage.removeItem(STORAGE_KEY_SESSION);
     }
 
@@ -302,6 +319,10 @@ export class Auth {
             session.requirePasswordChange = false;
             localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
         }
+        
+        logAction('change_password', 'usuario', userId, {
+            username: users[index].username
+        });
 
         return { success: true };
     }

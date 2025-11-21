@@ -2,6 +2,7 @@ import { Utils } from '../shared/utils.js';
 import { Storage } from '../shared/storage.js';
 import { Auth } from '../shared/auth.js';
 import { Modals } from '../shared/modals.js';
+import { logAction } from '../shared/audit-logger.js';
 
 export class BicicletasManager {
     constructor(app) {
@@ -87,6 +88,15 @@ export class BicicletasManager {
             const newBike = { id: Utils.generateUUID(), modelo, marca, cor };
             client.bicicletas.push(newBike);
             Storage.saveClients(this.app.data.clients);
+            
+            logAction('create', 'bicicleta', newBike.id, { 
+                modelo, 
+                marca, 
+                cor,
+                cliente: client.nome,
+                clienteCpf: client.cpf
+            });
+            
             this.renderClientDetails();
             this.app.toggleModal('add-bike-modal', false);
         }
@@ -206,11 +216,22 @@ export class BicicletasManager {
         const bike = client.bicicletas.find(b => b.id === bikeId);
         if (!bike) return;
 
+        const oldData = { modelo: bike.modelo, marca: bike.marca, cor: bike.cor };
         bike.modelo = modelo;
         bike.marca = marca;
         bike.cor = cor;
 
         Storage.saveClients(this.app.data.clients);
+        
+        logAction('edit', 'bicicleta', bikeId, {
+            modelo,
+            marca,
+            cor,
+            cliente: client.nome,
+            clienteCpf: client.cpf,
+            changes: { before: oldData, after: { modelo, marca, cor } }
+        });
+        
         this.renderClientDetails();
         this.app.toggleModal('edit-bike-modal', false);
     }

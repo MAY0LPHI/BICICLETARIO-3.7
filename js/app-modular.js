@@ -177,7 +177,7 @@ class App {
                             <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
                                 Alterar Senha
                             </button>
-                            <button type="button" id="logout-btn" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <button type="button" id="modal-logout-btn" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                                 Sair
                             </button>
                         </div>
@@ -216,7 +216,7 @@ class App {
             }
         });
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
+        document.getElementById('modal-logout-btn').addEventListener('click', () => {
             Auth.logout();
             window.location.reload();
         });

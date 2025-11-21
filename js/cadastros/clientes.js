@@ -2,6 +2,7 @@ import { Utils } from '../shared/utils.js';
 import { Storage } from '../shared/storage.js';
 import { Auth } from '../shared/auth.js';
 import { Modals } from '../shared/modals.js';
+import { logAction } from '../shared/audit-logger.js';
 
 export class ClientesManager {
     constructor(app) {
@@ -96,6 +97,9 @@ export class ClientesManager {
         const newClient = { id: Utils.generateUUID(), nome, cpf, telefone, bicicletas: [] };
         this.app.data.clients.push(newClient);
         Storage.saveClients(this.app.data.clients);
+        
+        logAction('create', 'cliente', newClient.id, { nome, cpf, telefone });
+        
         this.renderClientList();
         this.elements.addClientForm.reset();
     }
@@ -187,10 +191,19 @@ export class ClientesManager {
 
         const client = this.app.data.clients.find(c => c.id === clientId);
         if (client) {
+            const oldData = { nome: client.nome, cpf: client.cpf, telefone: client.telefone };
             client.nome = nome;
             client.cpf = cpf;
             client.telefone = telefone;
             Storage.saveClients(this.app.data.clients);
+            
+            logAction('edit', 'cliente', clientId, { 
+                nome, 
+                cpf, 
+                telefone,
+                changes: { before: oldData, after: { nome, cpf, telefone } }
+            });
+            
             this.renderClientList(this.elements.searchInput.value);
             this.app.bicicletasManager.renderClientDetails();
             this.app.toggleModal('edit-client-modal', false);
