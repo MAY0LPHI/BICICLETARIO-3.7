@@ -49,18 +49,47 @@ O sistema adota uma arquitetura modular baseada em Vanilla JavaScript (ES6+ Modu
 
 ## Replit Environment Setup
 ### Recent Changes (November 21, 2025)
--   **Sistema de Auditoria**: Implementado sistema completo de rastreamento de ações dos usuários com:
+
+#### Phase 1: Initial Setup
+-   **Initial Replit Setup**: Imported GitHub project and configured for Replit environment
+    -   Python 3.12 already available in environment
+    -   Configured workflow "Web Server" to run `python3 server.py` on port 5000
+    -   Added `.gitignore` file to exclude `node_modules/`, `dist/`, `dados/`, Python cache, and temporary files
+    -   Configured autoscale deployment for production
+    -   Web server successfully running on port 5000 with Storage API on port 5001
+    -   Application uses localStorage as fallback when file storage API is not accessible (expected behavior)
+
+#### Phase 2: Sistema de Auditoria
+-   **Sistema de Auditoria**: Sistema completo de rastreamento de ações dos usuários já implementado:
     -   Módulo AuditLogger (js/shared/audit-logger.js) que registra todas as operações CRUD
     -   Logging automático em clientes, bicicletas, registros, usuários e autenticação
     -   Interface de relatório na aba Usuários com filtros por período e usuário
     -   Exportação de relatórios em CSV e PDF
     -   Limite de 5.000 registros com rotação automática
--   **Correção de Bug**: Resolvido conflito de IDs no modal de mudança de senha (botão "Sair" não funcionava)
 
-### Previous Changes (November 20, 2025)
--   **Web Server Configuration**: Configurado workflow do Python server na porta 5000
--   **Deployment Setup**: Configurado deployment "autoscale" para produção
--   **Git Ignore**: Adicionado `.gitignore` para excluir `node_modules`, `dist`, `dados/` e outros arquivos temporários
+#### Phase 3: Sistema de Permissões por Perfil (NEW - 21/11/2025)
+-   **Sistema de Controle de Acesso**: Implementação completa de permissões granulares
+    -   Módulo Auth expandido com `hasPermission()` e `requirePermission()`
+    -   Três perfis: dono (acesso total), admin (acesso amplo), funcionário (permissões limitadas)
+    -   Permissões por módulo: clientes, registros, configuracao, usuarios
+    -   Proteção em dois níveis: UI (renderização) e Runtime (execução de funções)
+    -   Verificação de permissão em TODOS os módulos: clientes.js, bicicletas.js, registros-diarios.js, configuracao.js, usuarios.js
+    -   Funções `applyPermissionsToUI()` em cada módulo para esconder elementos não autorizados
+    -   Filtro automático de abas visíveis baseado em permissões
+
+#### Phase 4: Sistema de Exportação/Importação (NEW - 21/11/2025)
+-   **Exportação Completa de Dados**:
+    -   Exportação para Excel (.xlsx) com 3 abas: Clientes, Registros, Usuários
+    -   Exportação para CSV com 4 seções
+    -   Bicicletas integradas como JSON dentro de cada cliente (nova estrutura compacta)
+    -   Inclui todos os registros de acesso (entrada, saída, pernoite, acesso removido)
+-   **Importação Inteligente de Dados**:
+    -   Aceita arquivos Excel (.xlsx) ou CSV
+    -   Mesclagem automática baseada em CPF (clientes) e ID (registros, usuários)
+    -   Evita duplicatas automaticamente
+    -   Compatibilidade com formato antigo (bicicletas em aba separada) e novo (JSON integrado)
+    -   Estatísticas de mesclagem exibidas ao usuário
+-   **Ciclo Completo**: Exportar → Importar funciona 100% com todos os dados preservados
 
 ### Running on Replit
 -   **Development**: O servidor Python roda automaticamente em `http://0.0.0.0:5000/`

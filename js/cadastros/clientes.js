@@ -142,6 +142,13 @@ export class ClientesManager {
     }
 
     openEditClientModal(clientId) {
+        try {
+            Auth.requirePermission('clientes', 'editar');
+        } catch (error) {
+            Modals.alert(error.message, 'Permissão Negada');
+            return;
+        }
+
         const client = this.app.data.clients.find(c => c.id === clientId);
         if (!client) return;
 
@@ -207,6 +214,28 @@ export class ClientesManager {
             this.renderClientList(this.elements.searchInput.value);
             this.app.bicicletasManager.renderClientDetails();
             this.app.toggleModal('edit-client-modal', false);
+        }
+    }
+
+    applyPermissionsToUI() {
+        const addClientSection = document.querySelector('#clientes-tab-content .bg-white.rounded-lg.shadow-sm.p-6');
+        
+        if (!Auth.hasPermission('clientes', 'adicionar')) {
+            if (addClientSection) {
+                addClientSection.style.display = 'none';
+            }
+            const submitBtn = this.elements.addClientForm?.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            if (addClientSection) {
+                addClientSection.style.display = '';
+            }
+        }
+
+        if (!Auth.hasPermission('clientes', 'editar')) {
+            document.querySelectorAll('.edit-client-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
         }
     }
 }

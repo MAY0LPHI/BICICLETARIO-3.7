@@ -91,6 +91,21 @@ class App {
         const session = Auth.getCurrentSession();
         if (!session) return;
 
+        const clientesTab = document.getElementById('clientes-tab');
+        if (clientesTab && !Auth.hasPermission('clientes', 'ver')) {
+            clientesTab.classList.add('hidden');
+        }
+
+        const registrosDiariosTab = document.getElementById('registros-diarios-tab');
+        if (registrosDiariosTab && !Auth.hasPermission('registros', 'ver')) {
+            registrosDiariosTab.classList.add('hidden');
+        }
+
+        const configuracaoTab = document.getElementById('configuracao-tab');
+        if (configuracaoTab && !Auth.hasPermission('configuracao', 'ver')) {
+            configuracaoTab.classList.add('hidden');
+        }
+
         const usuariosTab = document.getElementById('usuarios-tab');
         if (usuariosTab) {
             if (Auth.hasPermission('configuracao', 'gerenciarUsuarios')) {
@@ -100,9 +115,33 @@ class App {
             }
         }
 
-        const configuracaoTab = document.getElementById('configuracao-tab');
-        if (configuracaoTab && !Auth.hasPermission('configuracao', 'ver')) {
-            configuracaoTab.classList.add('hidden');
+        this.selectFirstVisibleTab();
+
+        if (this.clientesManager) {
+            this.clientesManager.applyPermissionsToUI();
+        }
+        if (this.registrosManager) {
+            this.registrosManager.applyPermissionsToUI();
+        }
+        if (this.configuracaoManager) {
+            this.configuracaoManager.applyPermissionsToUI();
+        }
+    }
+
+    selectFirstVisibleTab() {
+        const tabs = ['clientes', 'registros-diarios', 'configuracao', 'usuarios'];
+        const permissions = {
+            'clientes': () => Auth.hasPermission('clientes', 'ver'),
+            'registros-diarios': () => Auth.hasPermission('registros', 'ver'),
+            'configuracao': () => Auth.hasPermission('configuracao', 'ver'),
+            'usuarios': () => Auth.hasPermission('configuracao', 'gerenciarUsuarios')
+        };
+
+        for (const tabName of tabs) {
+            if (permissions[tabName]()) {
+                this.switchTab(tabName);
+                break;
+            }
         }
     }
 

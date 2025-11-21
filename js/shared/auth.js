@@ -45,7 +45,17 @@ export class Auth {
             permissoes: {
                 clientes: { ver: true, adicionar: true, editar: true, excluir: true },
                 registros: { ver: true, adicionar: true, editar: true, excluir: true },
-                configuracao: { ver: true, exportar: true, importar: true, gerenciarUsuarios: true }
+                configuracao: { 
+                    ver: true, 
+                    exportar: true, 
+                    importar: true, 
+                    gerenciarUsuarios: true,
+                    buscaAvancada: true,
+                    exportarDados: true,
+                    importarDados: true,
+                    exportarSistema: true,
+                    importarSistema: true
+                }
             },
             ativo: true,
             requirePasswordChange: false,
@@ -71,7 +81,17 @@ export class Auth {
             permissoes: {
                 clientes: { ver: true, adicionar: true, editar: true, excluir: true },
                 registros: { ver: true, adicionar: true, editar: true, excluir: true },
-                configuracao: { ver: true, exportar: true, importar: true, gerenciarUsuarios: true }
+                configuracao: { 
+                    ver: true, 
+                    exportar: true, 
+                    importar: true, 
+                    gerenciarUsuarios: true,
+                    buscaAvancada: true,
+                    exportarDados: true,
+                    importarDados: true,
+                    exportarSistema: true,
+                    importarSistema: true
+                }
             },
             ativo: true,
             requirePasswordChange: true,
@@ -87,7 +107,17 @@ export class Auth {
             permissoes: {
                 clientes: { ver: true, adicionar: true, editar: true, excluir: true },
                 registros: { ver: true, adicionar: true, editar: true, excluir: true },
-                configuracao: { ver: true, exportar: true, importar: true, gerenciarUsuarios: true }
+                configuracao: { 
+                    ver: true, 
+                    exportar: true, 
+                    importar: true, 
+                    gerenciarUsuarios: true,
+                    buscaAvancada: true,
+                    exportarDados: true,
+                    importarDados: true,
+                    exportarSistema: true,
+                    importarSistema: true
+                }
             },
             ativo: true,
             requirePasswordChange: false,

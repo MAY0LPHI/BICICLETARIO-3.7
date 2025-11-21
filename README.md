@@ -1,120 +1,51 @@
 # 🚲 Sistema de Gerenciamento de Bicicletário
 
-Sistema completo para gerenciamento de estacionamento de bicicletas, desenvolvido para **BICICLETARIO SHOP. BOULEVARD V.V.**
+**Documentação principal da aplicação** | [Versão atual: 3.0](docs/README-PRINCIPAL.md)
 
-## ✨ Funcionalidades
+## 📚 Documentação Disponível
 
-### 📋 Gestão de Cadastros
-- ✅ Cadastro de clientes com validação de CPF
-- ✅ Cadastro de múltiplas bicicletas por cliente
-- ✅ Busca rápida por nome ou CPF
-- ✅ Formatação automática de CPF e telefone
+A documentação completa foi organizada na pasta `/docs`:
 
-### 📊 Controle de Registros
-- ✅ Registro de entrada de bicicletas
-- ✅ **Dropdown de ações múltiplas:**
-  - 🚪 Registrar saída normal
-  - 🚫 Remover acesso (banimento)
-  - ✏️ Alterar horário de entrada
-  - ➕ Adicionar outra bike do mesmo cliente
-  - 🌙 Pernoite (registra para o dia seguinte automaticamente)
-- ✅ Visualização de registros por data
-- ✅ Diferenciação visual (saída normal vs acesso removido)
-- ✅ Histórico completo de movimentação
-- ✅ Exportação para CSV
-- ✅ Exportação para PDF
+### 🎯 Começar por Aqui
+- **[README-PRINCIPAL.md](docs/README-PRINCIPAL.md)** - Guia de uso completo da aplicação
+- **[MUDANCAS-SISTEMA-PERMISSOES.md](docs/MUDANCAS-SISTEMA-PERMISSOES.md)** - 🆕 Sistema de permissões por perfil de usuário
 
-### 🎨 Interface
-- ✅ Tema claro e escuro
-- ✅ Design responsivo
-- ✅ Interface intuitiva em português
-- ✅ Ícones modernos (Lucide)
+### 🔧 Documentação Técnica
+- **[replit.md](replit.md)** - Arquitetura técnica e estrutura do projeto
+- **[ESTRUTURA.md](docs/ESTRUTURA.md)** - Organização modular do código
+- **[SISTEMA-ARQUIVOS.md](docs/SISTEMA-ARQUIVOS.md)** - Estrutura de pastas e armazenamento
 
-## 📁 Organização do Código
+### 🎨 Funcionalidades
+- **[DROPDOWN-ACOES.md](docs/DROPDOWN-ACOES.md)** - Sistema de ações em registros diários
+- **[FUNCIONALIDADE-PERNOITE.md](docs/FUNCIONALIDADE-PERNOITE.md)** - Sistema de pernoite
+- **[ORGANIZACAO.md](docs/ORGANIZACAO.md)** - Reorganização da interface
 
-O projeto está organizado em módulos para facilitar manutenção:
+### 💻 Desktop e Deploy
+- **[DESKTOP-APP.md](docs/DESKTOP-APP.md)** - Aplicação Electron para Windows
+- **[BUILD-WINDOWS.md](docs/BUILD-WINDOWS.md)** - Como compilar para Windows
+- **[FUNCIONAMENTO-OFFLINE.md](docs/FUNCIONAMENTO-OFFLINE.md)** - Funcionamento sem internet
 
-```
-📂 js/
-  ├── 📂 cadastros/          → Módulo de cadastros
-  │   ├── clientes.js        → Gerenciamento de clientes
-  │   └── bicicletas.js      → Gerenciamento de bicicletas
-  │
-  ├── 📂 registros/          → Módulo de registros
-  │   └── registros-diarios.js → Registros de entrada/saída
-  │
-  └── 📂 shared/             → Código compartilhado
-      ├── utils.js           → Funções utilitárias
-      └── storage.js         → Gerenciamento de dados
-```
-
-## 🚀 Como Usar
-
-### Cadastrar Cliente
-1. Preencha o formulário com nome, CPF e telefone
-2. Clique em "Salvar Cliente"
-3. O CPF é validado automaticamente
-
-### Adicionar Bicicleta
-1. Selecione um cliente da lista
-2. Clique em "Adicionar Bicicleta"
-3. Preencha modelo, marca e cor
-4. Clique em "Adicionar"
-
-### Registrar Entrada
-1. Selecione um cliente
-2. Clique em "Registrar Entrada" na bicicleta desejada
-3. Confirme o registro com data/hora atual
-
-### Registrar Saída ou Outras Ações
-1. Vá para aba "Registros Diários"
-2. Selecione a data
-3. Use o dropdown de ações para:
-   - 🚪 **Registrar Saída**: Saída normal da bike
-   - 🚫 **Remover Acesso**: Negar acesso/banir cliente
-   - ✏️ **Alterar Registro**: Corrigir horário de entrada
-   - ➕ **Adicionar Outra Bike**: Registrar bike adicional do mesmo cliente
-
-### Exportar Dados
-1. Na aba "Registros Diários", selecione uma data
-2. Clique em "Exportar"
-3. Escolha CSV ou PDF
-
-## 🛠️ Tecnologias
-
-- **Frontend**: HTML5, CSS3, JavaScript ES6+
-- **Estilos**: Tailwind CSS
-- **Ícones**: Lucide Icons
-- **Exportação PDF**: jsPDF
-- **Armazenamento**: localStorage
-- **Servidor Dev**: Python HTTP Server
-
-## 📱 Suporte
-
-- ✅ Desktop (Chrome, Firefox, Safari, Edge)
-- ✅ Tablet
-- ✅ Mobile (responsivo)
-
-## 🔒 Privacidade
-
-Todos os dados são armazenados localmente no navegador (localStorage). Nenhuma informação é enviada para servidores externos.
-
-## 📚 Documentação
-
-- `README.md` - Este guia de uso
-- `replit.md` - Documentação técnica completa
-- `ESTRUTURA.md` - Detalhes da arquitetura modular
-- `ORGANIZACAO.md` - Explicação da reorganização
-- `DROPDOWN-ACOES.md` - Guia do dropdown de ações
-- `RESUMO-VISUAL.md` - Resumo visual da estrutura
-- `legado/` - Código anterior para referência
-
-## 🎯 Desenvolvido para
-
-Lojas de estacionamento de bicicletas que precisam de um sistema simples e eficiente para controlar entrada e saída de bicicletas de seus clientes.
+### 🐛 Troubleshooting
+- **[DESKTOP-TROUBLESHOOTING.md](docs/DESKTOP-TROUBLESHOOTING.md)** - Soluções para problemas
+- **[CORRECOES-DESKTOP.md](docs/CORRECOES-DESKTOP.md)** - Correções aplicadas
+- **[SOLUCAO-ERRO-BUILD-WINDOWS.md](docs/SOLUCAO-ERRO-BUILD-WINDOWS.md)** - Erros de build
 
 ---
 
-**Versão**: 2.1 (Modular + Dropdown de Ações)  
-**Última atualização**: 16/10/2025
-#
+## 🚀 Início Rápido
+
+### Credenciais Padrão
+- **Dono**: CELO123 / CELO123
+- **Admin**: admin / admin123
+
+### Principais Funcionalidades
+✅ Gerenciamento de clientes e bicicletas  
+✅ Registros de entrada e saída com dropdown de ações  
+✅ Sistema de permissões por perfil de usuário  
+✅ Exportação/Importação completa de dados  
+✅ Tema claro e escuro  
+✅ Sistema de auditoria com rastreamento de ações  
+
+---
+
+**Última atualização**: 21/11/2025 (v3.0 - Sistema de Permissões + Exportação/Importação)

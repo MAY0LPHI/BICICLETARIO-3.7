@@ -122,6 +122,13 @@ export class RegistrosManager {
 
     async handleRegisterSaida(e) {
         if (e.target.closest('.register-saida-btn')) {
+            try {
+                Auth.requirePermission('registros', 'editar');
+            } catch (error) {
+                Modals.alert(error.message, 'Permissão Negada');
+                return;
+            }
+
             const btn = e.target.closest('.register-saida-btn');
             const registroId = btn.dataset.registroId;
             const registro = this.app.data.registros.find(r => r.id === registroId);
@@ -144,6 +151,21 @@ export class RegistrosManager {
             const bikeId = select.dataset.bikeId;
             
             if (!action) return;
+
+            const requiresEdit = ['saida', 'remover', 'pernoite', 'alterar'].includes(action);
+            const requiresAdd = action === 'adicionar';
+
+            if (requiresEdit && !Auth.hasPermission('registros', 'editar')) {
+                Modals.alert('Você não tem permissão para editar registros.', 'Permissão Negada');
+                select.value = '';
+                return;
+            }
+
+            if (requiresAdd && !Auth.hasPermission('registros', 'adicionar')) {
+                Modals.alert('Você não tem permissão para adicionar registros.', 'Permissão Negada');
+                select.value = '';
+                return;
+            }
 
             switch(action) {
                 case 'saida':
@@ -219,6 +241,13 @@ export class RegistrosManager {
 
     async handleReverterAcao(e) {
         if (e.target.closest('.reverter-acao-btn')) {
+            try {
+                Auth.requirePermission('registros', 'editar');
+            } catch (error) {
+                Modals.alert(error.message, 'Permissão Negada');
+                return;
+            }
+
             const btn = e.target.closest('.reverter-acao-btn');
             const registroId = btn.dataset.registroId;
             await this.reverterAcao(registroId);
@@ -253,6 +282,13 @@ export class RegistrosManager {
 
     async handleReverterPernoite(e) {
         if (e.target.closest('.reverter-pernoite-btn')) {
+            try {
+                Auth.requirePermission('registros', 'editar');
+            } catch (error) {
+                Modals.alert(error.message, 'Permissão Negada');
+                return;
+            }
+
             const btn = e.target.closest('.reverter-pernoite-btn');
             const registroId = btn.dataset.registroId;
             await this.reverterPernoite(registroId);
@@ -654,6 +690,9 @@ export class RegistrosManager {
             return;
         }
 
+        const canEditRegistros = Auth.hasPermission('registros', 'editar');
+        const canAddRegistros = Auth.hasPermission('registros', 'adicionar');
+
         this.elements.dailyRecordsList.innerHTML = `
             <table class="w-full text-sm">
                 <thead class="text-left bg-slate-50 dark:bg-slate-700/40">
@@ -686,34 +725,34 @@ export class RegistrosManager {
                             </td>
                             <td class="p-3 align-top text-slate-600 dark:text-slate-300">${registro.dataHoraSaida ? new Date(registro.dataHoraSaida).toLocaleString('pt-BR') : ''}</td>
                             <td class="p-3 align-top">
-                                ${!registro.dataHoraSaida && !registro.pernoite ? `
+                                ${!registro.dataHoraSaida && !registro.pernoite && (canEditRegistros || canAddRegistros) ? `
                                     <select class="action-select text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" 
                                             data-registro-id="${registro.id}" 
                                             data-client-id="${client.id}" 
                                             data-bike-id="${bike.id}">
                                         <option value="">Selecione uma ação</option>
-                                        <option value="saida">🚪 Registrar Saída</option>
-                                        <option value="remover">🚫 Remover Acesso</option>
-                                        <option value="pernoite">🌙 Pernoite</option>
-                                        <option value="alterar">🔄 Trocar Bicicleta</option>
-                                        <option value="adicionar">➕ Adicionar Outra Bike</option>
+                                        ${canEditRegistros ? '<option value="saida">🚪 Registrar Saída</option>' : ''}
+                                        ${canEditRegistros ? '<option value="remover">🚫 Remover Acesso</option>' : ''}
+                                        ${canEditRegistros ? '<option value="pernoite">🌙 Pernoite</option>' : ''}
+                                        ${canEditRegistros ? '<option value="alterar">🔄 Trocar Bicicleta</option>' : ''}
+                                        ${canAddRegistros ? '<option value="adicionar">➕ Adicionar Outra Bike</option>' : ''}
                                     </select>
-                                ` : registro.pernoite && !registro.dataHoraSaida && registro.registroOriginalId ? `
+                                ` : !registro.dataHoraSaida && !registro.pernoite ? '<span class="text-xs text-slate-500">Em aberto</span>' : registro.pernoite && !registro.dataHoraSaida && registro.registroOriginalId && (canEditRegistros || canAddRegistros) ? `
                                     <div class="flex flex-col gap-2">
                                         <select class="action-select text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" 
                                                 data-registro-id="${registro.id}" 
                                                 data-client-id="${client.id}" 
                                                 data-bike-id="${bike.id}">
                                             <option value="">Selecione uma ação</option>
-                                            <option value="saida">🚪 Registrar Saída</option>
-                                            <option value="remover">🚫 Remover Acesso</option>
-                                            <option value="pernoite">🌙 Pernoite</option>
-                                            <option value="alterar">🔄 Trocar Bicicleta</option>
-                                            <option value="adicionar">➕ Adicionar Outra Bike</option>
+                                            ${canEditRegistros ? '<option value="saida">🚪 Registrar Saída</option>' : ''}
+                                            ${canEditRegistros ? '<option value="remover">🚫 Remover Acesso</option>' : ''}
+                                            ${canEditRegistros ? '<option value="pernoite">🌙 Pernoite</option>' : ''}
+                                            ${canEditRegistros ? '<option value="alterar">🔄 Trocar Bicicleta</option>' : ''}
+                                            ${canAddRegistros ? '<option value="adicionar">➕ Adicionar Outra Bike</option>' : ''}
                                         </select>
                                         <div class="flex items-center gap-2">
                                             <span class="text-xs font-medium text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/50 px-2 py-1 rounded-full">PERNOITE Ativo</span>
-                                            <button class="reverter-pernoite-btn text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20" 
+                                            ${canEditRegistros ? `<button class="reverter-pernoite-btn text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20" 
                                                     data-registro-id="${registro.id}"
                                                     title="Reverter pernoite">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -722,10 +761,10 @@ export class RegistrosManager {
                                                     <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
                                                     <path d="M8 16H3v5"/>
                                                 </svg>
-                                            </button>
+                                            </button>` : ''}
                                         </div>
                                     </div>
-                                ` : registro.pernoite && !registro.dataHoraSaida ? `
+                                ` : registro.pernoite && !registro.dataHoraSaida && canEditRegistros ? `
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs font-medium text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/50 px-2 py-1 rounded-full">PERNOITE Ativo</span>
                                         <button class="reverter-pernoite-btn text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20" 
@@ -739,7 +778,9 @@ export class RegistrosManager {
                                             </svg>
                                         </button>
                                     </div>
-                                ` : registro.dataHoraSaida ? `
+                                ` : registro.pernoite && !registro.dataHoraSaida ? `
+                                    <span class="text-xs font-medium text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/50 px-2 py-1 rounded-full">PERNOITE Ativo</span>
+                                ` : registro.dataHoraSaida && canEditRegistros ? `
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs font-medium ${registro.acessoRemovido ? 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50' : 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50'} px-2 py-1 rounded-full">${registro.acessoRemovido ? 'Acesso Removido' : 'Concluído'}</span>
                                         <button class="reverter-acao-btn text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20" 
@@ -753,9 +794,14 @@ export class RegistrosManager {
                                             </svg>
                                         </button>
                                     </div>
-                                ` : ''}
+                                ` : registro.dataHoraSaida ? `
+                                    <span class="text-xs font-medium ${registro.acessoRemovido ? 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50' : 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50'} px-2 py-1 rounded-full">${registro.acessoRemovido ? 'Acesso Removido' : 'Concluído'}</span>
+                                ` : `
+                                    <span class="text-xs text-slate-500">Sem ações disponíveis</span>
+                                `}
                             </td>
                             <td class="p-3 align-top">
+                                ${canEditRegistros ? `
                                 <button class="edit-registro-btn text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" 
                                         data-registro-id="${registro.id}"
                                         title="Editar registro">
@@ -764,6 +810,7 @@ export class RegistrosManager {
                                         <path d="m15 5 4 4"/>
                                     </svg>
                                 </button>
+                                ` : ''}
                             </td>
                         </tr>
                     `).join('')}
@@ -785,6 +832,13 @@ export class RegistrosManager {
     }
 
     async exportToCSV() {
+        try {
+            Auth.requirePermission('registros', 'ver');
+        } catch (error) {
+            Modals.alert(error.message, 'Permissão Negada');
+            return;
+        }
+
         this.toggleExportMenu(false);
         if (this.app.data.currentDailyRecords.length === 0) {
             await Modals.showAlert('Não há dados para exportar.', 'Atenção');
@@ -825,6 +879,13 @@ export class RegistrosManager {
     }
 
     async exportToPDF() {
+        try {
+            Auth.requirePermission('registros', 'ver');
+        } catch (error) {
+            Modals.alert(error.message, 'Permissão Negada');
+            return;
+        }
+
         this.toggleExportMenu(false);
         if (this.app.data.currentDailyRecords.length === 0) {
             await Modals.showAlert('Não há dados para exportar.', 'Atenção');
@@ -855,5 +916,21 @@ export class RegistrosManager {
         });
 
         doc.save(`registros_${selectedDateStr}.pdf`);
+    }
+
+    applyPermissionsToUI() {
+        const canView = Auth.hasPermission('registros', 'ver');
+        const canAdd = Auth.hasPermission('registros', 'adicionar');
+        const canEdit = Auth.hasPermission('registros', 'editar');
+
+        if (!canView) {
+            if (this.elements.exportBtn) this.elements.exportBtn.style.display = 'none';
+        }
+
+        if (!canAdd) {
+            if (this.elements.addRegistroBtn) this.elements.addRegistroBtn.style.display = 'none';
+        }
+
+        this.renderDailyRecords();
     }
 }

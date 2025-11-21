@@ -285,6 +285,41 @@ export class Usuarios {
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="perm-configuracao-buscaAvancada" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Busca Avançada</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="perm-configuracao-buscaAvancada">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="perm-configuracao-exportarDados" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Exportar Dados</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="perm-configuracao-exportarDados">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="perm-configuracao-importarDados" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Importar Dados</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="perm-configuracao-importarDados">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="perm-configuracao-exportarSistema" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Exportar Sistema</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="perm-configuracao-exportarSistema">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="perm-configuracao-importarSistema" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Importar Sistema</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="perm-configuracao-importarSistema">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -332,7 +367,12 @@ export class Usuarios {
                     ver: document.getElementById('perm-configuracao-ver').checked,
                     exportar: document.getElementById('perm-configuracao-exportar').checked,
                     importar: document.getElementById('perm-configuracao-importar').checked,
-                    gerenciarUsuarios: document.getElementById('perm-configuracao-gerenciarUsuarios').checked
+                    gerenciarUsuarios: document.getElementById('perm-configuracao-gerenciarUsuarios').checked,
+                    buscaAvancada: document.getElementById('perm-configuracao-buscaAvancada').checked,
+                    exportarDados: document.getElementById('perm-configuracao-exportarDados').checked,
+                    importarDados: document.getElementById('perm-configuracao-importarDados').checked,
+                    exportarSistema: document.getElementById('perm-configuracao-exportarSistema').checked,
+                    importarSistema: document.getElementById('perm-configuracao-importarSistema').checked
                 }
             }
         };
@@ -481,6 +521,41 @@ export class Usuarios {
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="edit-perm-configuracao-buscaAvancada" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Busca Avançada</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="edit-perm-configuracao-buscaAvancada" ${user.permissoes.configuracao.buscaAvancada ? 'checked' : ''}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="edit-perm-configuracao-exportarDados" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Exportar Dados</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="edit-perm-configuracao-exportarDados" ${user.permissoes.configuracao.exportarDados ? 'checked' : ''}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="edit-perm-configuracao-importarDados" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Importar Dados</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="edit-perm-configuracao-importarDados" ${user.permissoes.configuracao.importarDados ? 'checked' : ''}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="edit-perm-configuracao-exportarSistema" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Exportar Sistema</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="edit-perm-configuracao-exportarSistema" ${user.permissoes.configuracao.exportarSistema ? 'checked' : ''}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label for="edit-perm-configuracao-importarSistema" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">Importar Sistema</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="edit-perm-configuracao-importarSistema" ${user.permissoes.configuracao.importarSistema ? 'checked' : ''}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -527,7 +602,12 @@ export class Usuarios {
                     ver: document.getElementById('edit-perm-configuracao-ver').checked,
                     exportar: document.getElementById('edit-perm-configuracao-exportar').checked,
                     importar: document.getElementById('edit-perm-configuracao-importar').checked,
-                    gerenciarUsuarios: document.getElementById('edit-perm-configuracao-gerenciarUsuarios').checked
+                    gerenciarUsuarios: document.getElementById('edit-perm-configuracao-gerenciarUsuarios').checked,
+                    buscaAvancada: document.getElementById('edit-perm-configuracao-buscaAvancada').checked,
+                    exportarDados: document.getElementById('edit-perm-configuracao-exportarDados').checked,
+                    importarDados: document.getElementById('edit-perm-configuracao-importarDados').checked,
+                    exportarSistema: document.getElementById('edit-perm-configuracao-exportarSistema').checked,
+                    importarSistema: document.getElementById('edit-perm-configuracao-importarSistema').checked
                 }
             }
         };

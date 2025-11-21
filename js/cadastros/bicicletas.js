@@ -103,6 +103,13 @@ export class BicicletasManager {
     }
 
     openAddBikeModal(clientId) {
+        try {
+            Auth.requirePermission('clientes', 'editar');
+        } catch (error) {
+            Modals.alert(error.message, 'Permissão Negada');
+            return;
+        }
+
         this.elements.addBikeForm.reset();
         this.elements.bikeClientIdInput.value = clientId;
         this.app.toggleModal('add-bike-modal', true);
@@ -121,6 +128,9 @@ export class BicicletasManager {
         this.elements.clientDetailsPlaceholder.classList.add('hidden');
         this.elements.clientDetailsSection.classList.remove('hidden');
 
+        const canEditClients = Auth.hasPermission('clientes', 'editar');
+        const canAddRegistros = Auth.hasPermission('registros', 'adicionar');
+
         const bikesHTML = client.bicicletas.length > 0 ? client.bicicletas.map(bike => `
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 dark:bg-slate-700/40 dark:border-slate-700">
                <div class="flex justify-between items-start">
@@ -129,14 +139,18 @@ export class BicicletasManager {
                             <p class="font-semibold text-slate-800 dark:text-slate-100">${bike.modelo} <span class="font-normal text-slate-600 dark:text-slate-300">(${bike.marca})</span></p>
                             <p class="text-sm text-slate-500 dark:text-slate-400">Cor: ${bike.cor}</p>
                         </div>
+                        ${canEditClients ? `
                         <button class="edit-bike-btn text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-bike-id="${bike.id}" title="Editar bicicleta">
                             <i data-lucide="pencil" class="h-4 w-4"></i>
                         </button>
+                        ` : ''}
                     </div>
+                    ${canAddRegistros ? `
                     <button class="add-registro-btn flex items-center text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md shadow-sm transition-colors dark:bg-blue-500 dark:hover:bg-blue-600" data-bike-id="${bike.id}">
                         <i data-lucide="log-in" class="h-4 w-4 mr-1"></i>
                         Registrar Entrada
                     </button>
+                    ` : ''}
                </div>
                <div class="mt-4">
                     <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-2">Histórico de Movimentação</h4>
@@ -152,14 +166,18 @@ export class BicicletasManager {
                         <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">${client.nome.replace(/^"|"$/g, '')}</h3>
                         <p class="text-slate-500 dark:text-slate-400">${Utils.formatCPF(client.cpf)}${client.telefone ? ' &bull; ' + Utils.formatTelefone(client.telefone) : ''}</p>
                     </div>
+                    ${canEditClients ? `
                     <button id="edit-client-btn" class="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Editar dados do cliente">
                         <i data-lucide="pencil" class="h-5 w-5"></i>
                     </button>
+                    ` : ''}
                 </div>
+                ${canEditClients ? `
                 <button id="add-bike-to-client-btn" class="flex items-center text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md shadow-sm transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
                     <i data-lucide="plus" class="h-4 w-4 mr-1"></i>
                     Adicionar Bicicleta
                 </button>
+                ` : ''}
             </div>
             <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 ${bikesHTML}
@@ -168,8 +186,16 @@ export class BicicletasManager {
 
         lucide.createIcons();
         
-        document.getElementById('add-bike-to-client-btn').addEventListener('click', () => this.openAddBikeModal(client.id));
-        document.getElementById('edit-client-btn').addEventListener('click', () => this.app.clientesManager.openEditClientModal(client.id));
+        const addBikeBtn = document.getElementById('add-bike-to-client-btn');
+        if (addBikeBtn) {
+            addBikeBtn.addEventListener('click', () => this.openAddBikeModal(client.id));
+        }
+        
+        const editClientBtn = document.getElementById('edit-client-btn');
+        if (editClientBtn) {
+            editClientBtn.addEventListener('click', () => this.app.clientesManager.openEditClientModal(client.id));
+        }
+        
         this.elements.clientDetailsSection.querySelectorAll('.add-registro-btn').forEach(btn => {
             btn.addEventListener('click', () => this.app.registrosManager.openAddRegistroModal(client.id, btn.dataset.bikeId));
         });
@@ -179,6 +205,13 @@ export class BicicletasManager {
     }
 
     openEditBikeModal(clientId, bikeId) {
+        try {
+            Auth.requirePermission('clientes', 'editar');
+        } catch (error) {
+            Modals.alert(error.message, 'Permissão Negada');
+            return;
+        }
+
         const client = this.app.data.clients.find(c => c.id === clientId);
         if (!client) return;
 
@@ -234,5 +267,18 @@ export class BicicletasManager {
         
         this.renderClientDetails();
         this.app.toggleModal('edit-bike-modal', false);
+    }
+
+    applyPermissionsToUI() {
+        const canEdit = Auth.hasPermission('clientes', 'editar');
+        
+        if (!canEdit) {
+            document.querySelectorAll('.add-bike-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
+            document.querySelectorAll('.edit-bike-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
     }
 }

@@ -748,17 +748,20 @@ export class ConfiguracaoManager {
         const systemData = this.prepareSystemExportData();
         const wb = XLSX.utils.book_new();
 
-        const clientesWs = XLSX.utils.aoa_to_sheet(systemData.clientes);
-        XLSX.utils.book_append_sheet(wb, clientesWs, "Clientes");
+        if (systemData.clientes && systemData.clientes.length > 0) {
+            const clientesWs = XLSX.utils.aoa_to_sheet(systemData.clientes);
+            XLSX.utils.book_append_sheet(wb, clientesWs, "Clientes");
+        }
 
-        const bicicletasWs = XLSX.utils.aoa_to_sheet(systemData.bicicletas);
-        XLSX.utils.book_append_sheet(wb, bicicletasWs, "Bicicletas");
+        if (systemData.registros && systemData.registros.length > 0) {
+            const registrosWs = XLSX.utils.aoa_to_sheet(systemData.registros);
+            XLSX.utils.book_append_sheet(wb, registrosWs, "Registros");
+        }
 
-        const registrosWs = XLSX.utils.aoa_to_sheet(systemData.registros);
-        XLSX.utils.book_append_sheet(wb, registrosWs, "Registros");
-
-        const usuariosWs = XLSX.utils.aoa_to_sheet(systemData.usuarios);
-        XLSX.utils.book_append_sheet(wb, usuariosWs, "Usuarios");
+        if (systemData.usuarios && systemData.usuarios.length > 0) {
+            const usuariosWs = XLSX.utils.aoa_to_sheet(systemData.usuarios);
+            XLSX.utils.book_append_sheet(wb, usuariosWs, "Usuarios");
+        }
 
         const fileName = `backup_sistema_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, fileName);
@@ -776,12 +779,16 @@ export class ConfiguracaoManager {
         
         const systemData = this.prepareSystemExportData();
         
-        const sections = [
-            { name: 'Clientes', data: systemData.clientes },
-            { name: 'Bicicletas', data: systemData.bicicletas },
-            { name: 'Registros', data: systemData.registros },
-            { name: 'Usuarios', data: systemData.usuarios }
-        ];
+        const sections = [];
+        if (systemData.clientes && systemData.clientes.length > 0) {
+            sections.push({ name: 'Clientes', data: systemData.clientes });
+        }
+        if (systemData.registros && systemData.registros.length > 0) {
+            sections.push({ name: 'Registros', data: systemData.registros });
+        }
+        if (systemData.usuarios && systemData.usuarios.length > 0) {
+            sections.push({ name: 'Usuarios', data: systemData.usuarios });
+        }
 
         let csvContent = '';
         sections.forEach((section, index) => {
@@ -813,39 +820,24 @@ export class ConfiguracaoManager {
     }
 
     prepareSystemExportData() {
-        const clientesHeaders = ['ID', 'Nome', 'CPF', 'Telefone'];
+        const clientesHeaders = ['ID', 'Nome', 'CPF', 'Telefone', 'Bicicletas'];
         const clientesRows = this.app.data.clients.map(client => [
             client.id,
             client.nome,
             client.cpf,
-            client.telefone || ''
+            client.telefone || '',
+            client.bicicletas ? JSON.stringify(client.bicicletas) : '[]'
         ]);
 
-        const bicicletasHeaders = ['ID', 'Cliente ID', 'Modelo', 'Marca', 'Cor'];
-        const bicicletasRows = [];
-        this.app.data.clients.forEach(client => {
-            if (client.bicicletas) {
-                client.bicicletas.forEach(bike => {
-                    bicicletasRows.push([
-                        bike.id,
-                        client.id,
-                        bike.modelo,
-                        bike.marca,
-                        bike.cor
-                    ]);
-                });
-            }
-        });
-
-        const registrosHeaders = ['ID', 'Cliente ID', 'Bicicleta ID', 'Data Entrada', 'Data Saída', 'Tipo Saída', 'Pernoite', 'Registro Original ID'];
+        const registrosHeaders = ['ID', 'Cliente ID', 'Bicicleta ID', 'Data Entrada', 'Data Saída', 'Pernoite', 'Acesso Removido', 'Registro Original ID'];
         const registrosRows = this.app.data.registros.map(registro => [
             registro.id,
-            registro.clienteId,
-            registro.bicicletaId,
+            registro.clientId,
+            registro.bikeId,
             registro.dataHoraEntrada,
             registro.dataHoraSaida || '',
-            registro.tipoSaida || '',
             registro.pernoite ? 'Sim' : 'Não',
+            registro.acessoRemovido ? 'Sim' : 'Não',
             registro.registroOriginalId || ''
         ]);
 
@@ -863,7 +855,6 @@ export class ConfiguracaoManager {
 
         return {
             clientes: [clientesHeaders, ...clientesRows],
-            bicicletas: [bicicletasHeaders, ...bicicletasRows],
             registros: [registrosHeaders, ...registrosRows],
             usuarios: [usuariosHeaders, ...usuariosRows]
         };
@@ -1002,18 +993,18 @@ export class ConfiguracaoManager {
                     const workbook = XLSX.read(data, { type: 'array' });
 
                     const clientesSheet = workbook.Sheets['Clientes'];
-                    const bicicletasSheet = workbook.Sheets['Bicicletas'];
                     const registrosSheet = workbook.Sheets['Registros'];
                     const usuariosSheet = workbook.Sheets['Usuarios'];
+                    const bicicletasSheet = workbook.Sheets['Bicicletas'];
 
-                    if (!clientesSheet || !bicicletasSheet || !registrosSheet || !usuariosSheet) {
-                        throw new Error('Arquivo inválido. Certifique-se de que contém as abas: Clientes, Bicicletas, Registros e Usuarios');
+                    if (!clientesSheet || !registrosSheet || !usuariosSheet) {
+                        throw new Error('Arquivo inválido. Certifique-se de que contém as abas: Clientes, Registros e Usuarios');
                     }
 
                     const clientesData = XLSX.utils.sheet_to_json(clientesSheet, { header: 1 });
-                    const bicicletasData = XLSX.utils.sheet_to_json(bicicletasSheet, { header: 1 });
                     const registrosData = XLSX.utils.sheet_to_json(registrosSheet, { header: 1 });
                     const usuariosData = XLSX.utils.sheet_to_json(usuariosSheet, { header: 1 });
+                    const bicicletasData = bicicletasSheet ? XLSX.utils.sheet_to_json(bicicletasSheet, { header: 1 }) : [];
 
                     const clients = this.parseClientesData(clientesData, bicicletasData);
                     const registros = this.parseRegistrosData(registrosData);
@@ -1022,8 +1013,7 @@ export class ConfiguracaoManager {
                     resolve({
                         clients,
                         registros,
-                        usuarios,
-                        bicicletasCount: bicicletasData.length - 1
+                        usuarios
                     });
                 } catch (error) {
                     reject(error);
@@ -1086,8 +1076,7 @@ export class ConfiguracaoManager {
                     resolve({
                         clients,
                         registros,
-                        usuarios,
-                        bicicletasCount: bicicletasData.length - 1
+                        usuarios
                     });
                 } catch (error) {
                     reject(error);
@@ -1106,29 +1095,43 @@ export class ConfiguracaoManager {
             const row = clientesData[i];
             if (!row[0]) continue;
 
+            let bicicletas = [];
+            
+            // Verifica se as bicicletas estão no formato JSON (nova estrutura de exportação)
+            if (row[4]) {
+                try {
+                    bicicletas = JSON.parse(row[4]);
+                } catch (e) {
+                    bicicletas = [];
+                }
+            }
+
             clientesMap.set(row[0], {
                 id: row[0],
                 nome: row[1],
                 cpf: row[2],
                 telefone: row[3] || '',
-                bicicletas: []
+                bicicletas: bicicletas
             });
         }
 
-        for (let i = 1; i < bicicletasData.length; i++) {
-            const row = bicicletasData[i];
-            if (!row[0]) continue;
+        // Se houver aba de bicicletas separada (formato antigo), processa também
+        if (bicicletasData && bicicletasData.length > 1) {
+            for (let i = 1; i < bicicletasData.length; i++) {
+                const row = bicicletasData[i];
+                if (!row[0]) continue;
 
-            const clienteId = row[1];
-            const client = clientesMap.get(clienteId);
-            
-            if (client) {
-                client.bicicletas.push({
-                    id: row[0],
-                    modelo: row[2],
-                    marca: row[3],
-                    cor: row[4]
-                });
+                const clienteId = row[1];
+                const client = clientesMap.get(clienteId);
+                
+                if (client) {
+                    client.bicicletas.push({
+                        id: row[0],
+                        modelo: row[2],
+                        marca: row[3],
+                        cor: row[4]
+                    });
+                }
             }
         }
 
@@ -1144,12 +1147,12 @@ export class ConfiguracaoManager {
 
             registros.push({
                 id: row[0],
-                clienteId: row[1],
-                bicicletaId: row[2],
+                clientId: row[1],
+                bikeId: row[2],
                 dataHoraEntrada: row[3],
                 dataHoraSaida: row[4] || null,
-                tipoSaida: row[5] || null,
-                pernoite: row[6] === 'Sim',
+                pernoite: row[5] === 'Sim',
+                acessoRemovido: row[6] === 'Sim',
                 registroOriginalId: row[7] || null
             });
         }
@@ -1189,5 +1192,30 @@ export class ConfiguracaoManager {
             'text-blue-600 dark:text-blue-400'
         }`;
         statusEl.classList.remove('hidden');
+    }
+
+    applyPermissionsToUI() {
+        const canExport = Auth.hasPermission('configuracao', 'exportar');
+        const canImport = Auth.hasPermission('configuracao', 'importar');
+
+        if (!canExport) {
+            if (this.elements.exportExcelBtn) this.elements.exportExcelBtn.style.display = 'none';
+            if (this.elements.exportCsvBtn) this.elements.exportCsvBtn.style.display = 'none';
+            if (this.elements.exportSystemExcelBtn) this.elements.exportSystemExcelBtn.style.display = 'none';
+            if (this.elements.exportSystemCsvBtn) this.elements.exportSystemCsvBtn.style.display = 'none';
+        }
+
+        if (!canImport) {
+            if (this.elements.importFile) this.elements.importFile.style.display = 'none';
+            if (this.elements.importBtn) this.elements.importBtn.style.display = 'none';
+            if (this.elements.importSystemFile) this.elements.importSystemFile.style.display = 'none';
+            if (this.elements.importSystemBtn) this.elements.importSystemBtn.style.display = 'none';
+            
+            const importSection = document.querySelector('#configuracao-tab-content .bg-white.rounded-lg.shadow-sm.p-6:nth-of-type(2)');
+            if (importSection) importSection.style.display = 'none';
+            
+            const systemImportSection = document.querySelector('#configuracao-tab-content .bg-white.rounded-lg.shadow-sm.p-6:nth-of-type(3)');
+            if (systemImportSection) systemImportSection.style.display = 'none';
+        }
     }
 }
