@@ -270,6 +270,22 @@ class App {
             this.data.clients = await Storage.loadClients();
             this.data.registros = await Storage.loadRegistros();
         }
+        
+        let needsSave = false;
+        this.data.clients.forEach(client => {
+            if (!client.categoria) {
+                client.categoria = '';
+                needsSave = true;
+            }
+            if (!client.comentarios) {
+                client.comentarios = [];
+                needsSave = true;
+            }
+        });
+        
+        if (needsSave) {
+            await Storage.saveClients(this.data.clients);
+        }
     }
 
     switchTab(tabName) {

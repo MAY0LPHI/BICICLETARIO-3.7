@@ -389,5 +389,19 @@ export const Storage = {
             }
         }
         return null;
+    },
+
+    loadCategorias() {
+        const data = localStorage.getItem('bicicletario_categorias');
+        if (data) {
+            return JSON.parse(data);
+        }
+        const defaultCategories = ['Cliente', 'Lojista', 'Ifood', 'Academia'];
+        this.saveCategorias(defaultCategories);
+        return defaultCategories;
+    },
+
+    saveCategorias(categorias) {
+        localStorage.setItem('bicicletario_categorias', JSON.stringify(categorias));
     }
 };

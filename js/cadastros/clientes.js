@@ -94,11 +94,20 @@ export class ClientesManager {
             return;
         }
 
-        const newClient = { id: Utils.generateUUID(), nome, cpf, telefone, bicicletas: [] };
+        const categoria = formData.get('categoria') || '';
+        const newClient = { 
+            id: Utils.generateUUID(), 
+            nome, 
+            cpf, 
+            telefone, 
+            categoria,
+            comentarios: [],
+            bicicletas: [] 
+        };
         this.app.data.clients.push(newClient);
         Storage.saveClients(this.app.data.clients);
         
-        logAction('create', 'cliente', newClient.id, { nome, cpf, telefone });
+        logAction('create', 'cliente', newClient.id, { nome, cpf, telefone, categoria });
         
         this.renderClientList();
         this.elements.addClientForm.reset();
@@ -125,12 +134,31 @@ export class ClientesManager {
             return;
         }
         
-        this.elements.clientList.innerHTML = filteredClients.map(client => `
+        this.elements.clientList.innerHTML = filteredClients.map(client => {
+            const hasComments = client.comentarios && client.comentarios.length > 0;
+            const commentCount = hasComments ? client.comentarios.length : 0;
+            const categoryBadge = client.categoria ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">${client.categoria}</span>` : '';
+            
+            return `
             <div class="client-item p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-blue-400 cursor-pointer transition-colors dark:border-slate-700 dark:hover:bg-slate-700/50 dark:hover:border-blue-500 ${this.app.data.selectedClientId === client.id ? 'bg-blue-100 border-blue-400 dark:bg-blue-900/50 dark:border-blue-500' : ''}" data-id="${client.id}">
-                <p class="font-semibold text-slate-800 dark:text-slate-100">${client.nome.replace(/^"|"$/g, '')}</p>
-                <p class="text-sm text-slate-500 dark:text-slate-400">${Utils.formatCPF(client.cpf)}${client.telefone ? ' • ' + Utils.formatTelefone(client.telefone) : ''}</p>
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <p class="font-semibold text-slate-800 dark:text-slate-100">${client.nome.replace(/^"|"$/g, '')}</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">${Utils.formatCPF(client.cpf)}${client.telefone ? ' • ' + Utils.formatTelefone(client.telefone) : ''}</p>
+                        ${categoryBadge ? `<div class="mt-1">${categoryBadge}</div>` : ''}
+                    </div>
+                    ${hasComments ? `
+                    <div class="relative group">
+                        <div class="flex items-center justify-center w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full cursor-help">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                            <span class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-amber-500 rounded-full">${commentCount}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         this.elements.clientList.querySelectorAll('.client-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -139,6 +167,8 @@ export class ClientesManager {
                 this.renderClientList(this.elements.searchInput.value);
             });
         });
+        
+        lucide.createIcons();
     }
 
     openEditClientModal(clientId) {
@@ -158,6 +188,15 @@ export class ClientesManager {
         this.elements.editClientTelefone.value = Utils.formatTelefone(client.telefone);
         this.elements.editCpfError.classList.add('hidden');
         this.elements.editClientCpf.classList.remove('border-red-500');
+
+        if (this.app.configuracaoManager) {
+            this.app.configuracaoManager.updateCategoryDropdowns();
+        }
+        
+        const categoriaSelect = document.getElementById('edit-client-categoria');
+        if (categoriaSelect && client.categoria) {
+            categoriaSelect.value = client.categoria;
+        }
 
         this.app.toggleModal('edit-client-modal', true);
     }
@@ -198,22 +237,66 @@ export class ClientesManager {
 
         const client = this.app.data.clients.find(c => c.id === clientId);
         if (client) {
-            const oldData = { nome: client.nome, cpf: client.cpf, telefone: client.telefone };
+            const categoriaSelect = document.getElementById('edit-client-categoria');
+            const categoria = categoriaSelect ? categoriaSelect.value : (client.categoria || '');
+            
+            const oldData = { nome: client.nome, cpf: client.cpf, telefone: client.telefone, categoria: client.categoria };
             client.nome = nome;
             client.cpf = cpf;
             client.telefone = telefone;
+            client.categoria = categoria;
+            if (!client.comentarios) client.comentarios = [];
+            
             Storage.saveClients(this.app.data.clients);
             
             logAction('edit', 'cliente', clientId, { 
                 nome, 
                 cpf, 
                 telefone,
-                changes: { before: oldData, after: { nome, cpf, telefone } }
+                categoria,
+                changes: { before: oldData, after: { nome, cpf, telefone, categoria } }
             });
             
             this.renderClientList(this.elements.searchInput.value);
             this.app.bicicletasManager.renderClientDetails();
             this.app.toggleModal('edit-client-modal', false);
+        }
+    }
+
+    addComment(clientId, comentario) {
+        const client = this.app.data.clients.find(c => c.id === clientId);
+        if (client) {
+            if (!client.comentarios) client.comentarios = [];
+            const currentSession = Auth.getCurrentSession();
+            const newComment = {
+                id: Utils.generateUUID(),
+                usuario: currentSession?.username || 'Anônimo',
+                data: new Date().toISOString(),
+                texto: comentario
+            };
+            client.comentarios.push(newComment);
+            Storage.saveClients(this.app.data.clients);
+            
+            logAction('add_comment', 'cliente', clientId, { 
+                comentario,
+                usuario: currentSession?.username || 'Anônimo'
+            });
+            
+            this.renderClientList(this.elements.searchInput.value);
+            this.app.bicicletasManager.renderClientDetails();
+        }
+    }
+
+    deleteComment(clientId, commentId) {
+        const client = this.app.data.clients.find(c => c.id === clientId);
+        if (client && client.comentarios) {
+            client.comentarios = client.comentarios.filter(c => c.id !== commentId);
+            Storage.saveClients(this.app.data.clients);
+            
+            logAction('delete_comment', 'cliente', clientId, { commentId });
+            
+            this.renderClientList(this.elements.searchInput.value);
+            this.app.bicicletasManager.renderClientDetails();
         }
     }
 

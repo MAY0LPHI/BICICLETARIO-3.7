@@ -33,6 +33,7 @@ export class ConfiguracaoManager {
         this.setupSystemThemeListener();
         this.loadThemePreference();
         this.renderHistoricoOrganizado();
+        this.renderCategorias();
     }
 
     loadThemePreference() {
@@ -101,6 +102,106 @@ export class ConfiguracaoManager {
         if (this.elements.exportSystemCsvBtn) {
             this.elements.exportSystemCsvBtn.addEventListener('click', () => this.exportSystemToCSV());
         }
+
+        const addCategoriaBtn = document.getElementById('add-categoria-btn');
+        const novaCategoriaInput = document.getElementById('nova-categoria');
+        
+        if (addCategoriaBtn) {
+            addCategoriaBtn.addEventListener('click', () => this.addCategoria());
+        }
+        
+        if (novaCategoriaInput) {
+            novaCategoriaInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addCategoria();
+                }
+            });
+        }
+    }
+
+    renderCategorias() {
+        const categoriasList = document.getElementById('categorias-list');
+        if (!categoriasList) return;
+
+        const categorias = Storage.loadCategorias();
+        
+        if (categorias.length === 0) {
+            categoriasList.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400 text-center py-4">Nenhuma categoria cadastrada</p>';
+            return;
+        }
+
+        categoriasList.innerHTML = categorias.map(cat => `
+            <div class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30">
+                <span class="text-sm font-medium text-slate-800 dark:text-slate-200">${cat}</span>
+                <button class="delete-categoria-btn text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" data-categoria="${cat}">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
+
+        lucide.createIcons();
+
+        categoriasList.querySelectorAll('.delete-categoria-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const categoria = btn.dataset.categoria;
+                this.deleteCategoria(categoria);
+            });
+        });
+
+        this.updateCategoryDropdowns();
+    }
+
+    addCategoria() {
+        const input = document.getElementById('nova-categoria');
+        const categoria = input.value.trim().toUpperCase();
+
+        if (!categoria) {
+            Modals.alert('Por favor, digite um nome para a categoria.', 'Campo vazio');
+            return;
+        }
+
+        const categorias = Storage.loadCategorias();
+        
+        if (categorias.includes(categoria)) {
+            Modals.alert('Esta categoria já existe.', 'Categoria duplicada');
+            return;
+        }
+
+        categorias.push(categoria);
+        Storage.saveCategorias(categorias);
+        input.value = '';
+        this.renderCategorias();
+    }
+
+    deleteCategoria(categoria) {
+        Modals.confirm(
+            `Tem certeza que deseja remover a categoria "${categoria}"?`,
+            'Confirmar Remoção',
+            () => {
+                let categorias = Storage.loadCategorias();
+                categorias = categorias.filter(c => c !== categoria);
+                Storage.saveCategorias(categorias);
+                this.renderCategorias();
+            }
+        );
+    }
+
+    updateCategoryDropdowns() {
+        const categorias = Storage.loadCategorias();
+        const selectIds = ['categoria', 'edit-client-categoria', 'registro-categoria'];
+
+        selectIds.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Selecione uma categoria (opcional)</option>' +
+                    categorias.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+                if (currentValue && categorias.includes(currentValue)) {
+                    select.value = currentValue;
+                }
+            }
+        });
     }
 
     updateThemeLabels(selectedTheme) {

@@ -109,6 +109,12 @@
                                     <label for="telefone" class="block text-sm font-medium text-slate-600 dark:text-slate-400">Telefone</label>
                                     <input type="tel" id="telefone" name="telefone" required="" placeholder="(00) 00000-0000" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                                 </div>
+                                <div>
+                                    <label for="categoria" class="block text-sm font-medium text-slate-600 dark:text-slate-400">Categoria</label>
+                                    <select id="categoria" name="categoria" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Selecione uma categoria (opcional)</option>
+                                    </select>
+                                </div>
                                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
                                     Salvar Cliente
                                 </button>
@@ -326,6 +332,26 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
                         <h2 class="text-lg font-semibold mb-4 flex items-center text-slate-800 dark:text-slate-100">
+                            <i data-lucide="tags" class="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400"></i>
+                            Gerenciar Categorias
+                        </h2>
+                        <div class="space-y-4">
+                            <p class="text-sm text-slate-600 dark:text-slate-400">
+                                Adicione ou remova categorias para classificar clientes.
+                            </p>
+                            <div id="categorias-list" class="space-y-2 max-h-[200px] overflow-y-auto">
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="nova-categoria" placeholder="Nova categoria..." class="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" id="add-categoria-btn" class="flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                    <i data-lucide="plus" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h2 class="text-lg font-semibold mb-4 flex items-center text-slate-800 dark:text-slate-100">
                             <i data-lucide="database" class="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400"></i>
                             Exportar Sistema Completo
                         </h2>
@@ -504,6 +530,12 @@
                         <p class="text-sm text-slate-600 dark:text-slate-400">Cliente: <span id="registro-client-name" class="font-medium text-slate-800 dark:text-slate-200"></span></p>
                         <p class="text-sm text-slate-600 dark:text-slate-400">Bicicleta: <span id="registro-bike-info" class="font-medium text-slate-800 dark:text-slate-200"></span></p>
                     </div>
+                    <div>
+                        <label for="registro-categoria" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Categoria</label>
+                        <select id="registro-categoria" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Selecione uma categoria (opcional)</option>
+                        </select>
+                    </div>
                      <p class="text-sm text-slate-600 dark:text-slate-300">Confirma o registro de uma nova entrada para esta bicicleta com a data e hora atuais?</p>
                     <div class="pt-4 flex justify-end space-x-3">
                          <button type="button" id="cancel-add-registro" class="bg-white dark:bg-slate-700 py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Cancelar</button>
@@ -532,6 +564,12 @@
                     <div>
                         <label for="edit-client-telefone" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Telefone</label>
                         <input type="tel" id="edit-client-telefone" required placeholder="(00) 00000-0000" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="edit-client-categoria" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Categoria</label>
+                        <select id="edit-client-categoria" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Selecione uma categoria (opcional)</option>
+                        </select>
                     </div>
                     <div class="pt-4 flex justify-end space-x-3">
                         <button type="button" id="cancel-edit-client" class="bg-white dark:bg-slate-700 py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Cancelar</button>
@@ -605,6 +643,18 @@
         </div>
     </div>
     
+    <div id="view-comments-modal" class="fixed inset-0 z-30 flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md modal-content transform scale-95">
+            <div class="p-6">
+                <h3 class="text-lg font-medium leading-6 text-slate-900 dark:text-slate-100 mb-4">Comentários do Cliente</h3>
+                <div id="comments-view-list" class="space-y-3 max-h-[300px] overflow-y-auto mb-4"></div>
+                <div class="flex justify-end">
+                    <button type="button" id="close-comments-btn" class="bg-slate-200 dark:bg-slate-700 py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="custom-confirm-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 hidden modal-backdrop">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md modal-content transform scale-95">
             <div class="p-6">

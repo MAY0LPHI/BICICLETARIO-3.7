@@ -46,6 +46,7 @@ export class RegistrosManager {
         this.elements.dailyRecordsList.addEventListener('click', this.handleReverterAcao.bind(this));
         this.elements.dailyRecordsList.addEventListener('click', this.handleReverterPernoite.bind(this));
         this.elements.dailyRecordsList.addEventListener('click', this.handleEditRegistroClick.bind(this));
+        this.elements.dailyRecordsList.addEventListener('click', this.handleViewComments.bind(this));
         this.elements.dailyRecordsList.addEventListener('change', this.handleActionChange.bind(this));
         this.elements.editRegistroForm.addEventListener('submit', this.handleEditRegistroSubmit.bind(this));
         this.elements.cancelEditRegistroBtn.addEventListener('click', () => this.app.toggleModal('edit-registro-modal', false));
@@ -56,7 +57,51 @@ export class RegistrosManager {
         });
         this.elements.exportCsvBtn.addEventListener('click', () => this.exportToCSV());
         this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
+        
+        const closeCommentsBtn = document.getElementById('close-comments-btn');
+        if (closeCommentsBtn) {
+            closeCommentsBtn.addEventListener('click', () => this.app.toggleModal('view-comments-modal', false));
+        }
+        
         window.addEventListener('click', () => this.toggleExportMenu(false));
+    }
+
+    handleViewComments(e) {
+        if (e.target.closest('.view-comments-btn')) {
+            const btn = e.target.closest('.view-comments-btn');
+            const clientId = btn.dataset.clientId;
+            const client = this.app.data.clients.find(c => c.id === clientId);
+            
+            if (client) {
+                const comentarios = client.comentarios || [];
+                const commentsList = document.getElementById('comments-view-list');
+                
+                if (comentarios.length === 0) {
+                    commentsList.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400 text-center py-4">Nenhum comentário adicionado</p>';
+                } else {
+                    commentsList.innerHTML = comentarios.map(comment => {
+                        const commentDate = new Date(comment.data);
+                        return `
+                            <div class="flex gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                                <div class="flex-shrink-0">
+                                    <div class="flex items-center justify-center w-6 h-6 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                                        <i data-lucide="user" class="w-3 h-3 text-amber-600 dark:text-amber-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium text-amber-900 dark:text-amber-200">${comment.usuario}</p>
+                                    <p class="text-xs text-amber-600 dark:text-amber-400">${commentDate.toLocaleDateString('pt-BR')} ${commentDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</p>
+                                    <p class="text-sm text-amber-900 dark:text-amber-100 break-words mt-1">${comment.texto}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    lucide.createIcons();
+                }
+                
+                this.app.toggleModal('view-comments-modal', true);
+            }
+        }
     }
 
     async handleAddRegistro(e) {
@@ -73,6 +118,8 @@ export class RegistrosManager {
         const bikeId = this.elements.registroBikeIdInput.value;
         const client = this.app.data.clients.find(c => c.id === clientId);
         const bike = client?.bicicletas.find(b => b.id === bikeId);
+        const categoriaSelect = document.getElementById('registro-categoria');
+        const categoria = categoriaSelect ? categoriaSelect.value : (client?.categoria || '');
         
         if(bike) {
             const newRegistro = { 
@@ -81,6 +128,7 @@ export class RegistrosManager {
                 dataHoraSaida: null,
                 clientId: clientId,
                 bikeId: bikeId,
+                categoria: categoria,
                 bikeSnapshot: {
                     modelo: bike.modelo,
                     marca: bike.marca,
@@ -95,6 +143,7 @@ export class RegistrosManager {
                 clienteCpf: client.cpf,
                 modelo: bike.modelo,
                 marca: bike.marca,
+                categoria: categoria,
                 dataHoraEntrada: newRegistro.dataHoraEntrada
             });
             
@@ -116,6 +165,16 @@ export class RegistrosManager {
             this.elements.registroBikeIdInput.value = bikeId;
             this.elements.registroClientName.textContent = client.nome;
             this.elements.registroBikeInfo.textContent = `${bike.modelo} (${bike.marca} - ${bike.cor})`;
+            
+            if (this.app.configuracaoManager) {
+                this.app.configuracaoManager.updateCategoryDropdowns();
+            }
+            
+            const categoriaSelect = document.getElementById('registro-categoria');
+            if (categoriaSelect && client.categoria) {
+                categoriaSelect.value = client.categoria;
+            }
+            
             this.app.toggleModal('add-registro-modal', true);
         }
     }
@@ -800,7 +859,12 @@ export class RegistrosManager {
                                     <span class="text-xs text-slate-500">Sem ações disponíveis</span>
                                 `}
                             </td>
-                            <td class="p-3 align-top">
+                            <td class="p-3 align-top flex items-center gap-2">
+                                <button class="view-comments-btn text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors p-1 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20" 
+                                        data-client-id="${client.id}"
+                                        title="Ver comentários">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </button>
                                 ${canEditRegistros ? `
                                 <button class="edit-registro-btn text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" 
                                         data-registro-id="${registro.id}"

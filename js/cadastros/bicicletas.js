@@ -128,8 +128,8 @@ export class BicicletasManager {
         this.elements.clientDetailsPlaceholder.classList.add('hidden');
         this.elements.clientDetailsSection.classList.remove('hidden');
 
-        const canEditClients = Auth.hasPermission('clientes', 'editar');
         const canAddRegistros = Auth.hasPermission('registros', 'adicionar');
+        const canEditClients = Auth.hasPermission('clientes', 'editar');
 
         const bikesHTML = client.bicicletas.length > 0 ? client.bicicletas.map(bike => `
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 dark:bg-slate-700/40 dark:border-slate-700">
@@ -159,27 +159,78 @@ export class BicicletasManager {
             </div>
         `).join('') : '<p class="text-sm text-slate-500 dark:text-slate-400 text-center py-4">Nenhuma bicicleta cadastrada.</p>';
 
+        const comentarios = client.comentarios || [];
+        const currentSession = Auth.getCurrentSession();
+        const currentUsername = currentSession?.username || '';
+        const categoryBadge = client.categoria ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ml-3">${client.categoria}</span>` : '';
+
+        const commentsHTML = comentarios.length > 0 ? comentarios.map(comment => {
+            const commentDate = new Date(comment.data);
+            const isOwner = currentUsername && comment.usuario === currentUsername;
+            const canDeleteComment = isOwner || canEditClients;
+            return `
+                <div class="flex gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                            <i data-lucide="user" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-xs font-medium text-amber-900 dark:text-amber-200">${comment.usuario}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-xs text-amber-600 dark:text-amber-400">${commentDate.toLocaleDateString('pt-BR')} ${commentDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</p>
+                                ${canDeleteComment ? `
+                                <button class="delete-comment-btn text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" data-comment-id="${comment.id}" title="Excluir comentário">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <p class="text-sm text-amber-900 dark:text-amber-100 break-words">${comment.texto}</p>
+                    </div>
+                </div>
+            `;
+        }).join('') : '<p class="text-sm text-slate-500 dark:text-slate-400 text-center py-3">Nenhum comentário adicionado</p>';
+
         this.elements.clientDetailsSection.innerHTML = `
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-start gap-3">
                     <div>
-                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">${client.nome.replace(/^"|"$/g, '')}</h3>
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">${client.nome.replace(/^"|"$/g, '')}${categoryBadge}</h3>
                         <p class="text-slate-500 dark:text-slate-400">${Utils.formatCPF(client.cpf)}${client.telefone ? ' &bull; ' + Utils.formatTelefone(client.telefone) : ''}</p>
                     </div>
-                    ${canEditClients ? `
+                    ${Auth.hasPermission('clientes', 'editar') ? `
                     <button id="edit-client-btn" class="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Editar dados do cliente">
                         <i data-lucide="pencil" class="h-5 w-5"></i>
                     </button>
                     ` : ''}
                 </div>
-                ${canEditClients ? `
+                ${Auth.hasPermission('clientes', 'editar') ? `
                 <button id="add-bike-to-client-btn" class="flex items-center text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md shadow-sm transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
                     <i data-lucide="plus" class="h-4 w-4 mr-1"></i>
                     Adicionar Bicicleta
                 </button>
                 ` : ''}
             </div>
-            <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            
+            <div class="mb-6 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-3 flex items-center">
+                    <i data-lucide="message-circle" class="w-4 h-4 mr-2 text-amber-600 dark:text-amber-400"></i>
+                    Comentários
+                </h3>
+                <div class="space-y-3 mb-4 max-h-[200px] overflow-y-auto">
+                    ${commentsHTML}
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="novo-comentario" placeholder="Adicionar comentário..." class="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" id="add-comment-btn" class="flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                        <i data-lucide="send" class="h-4 w-4"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
                 ${bikesHTML}
             </div>
         `;
@@ -201,6 +252,34 @@ export class BicicletasManager {
         });
         this.elements.clientDetailsSection.querySelectorAll('.edit-bike-btn').forEach(btn => {
             btn.addEventListener('click', () => this.openEditBikeModal(client.id, btn.dataset.bikeId));
+        });
+
+        const addCommentBtn = document.getElementById('add-comment-btn');
+        const novoComentarioInput = document.getElementById('novo-comentario');
+        
+        if (addCommentBtn && novoComentarioInput) {
+            const addCommentHandler = () => {
+                const comentario = novoComentarioInput.value.trim();
+                if (comentario) {
+                    this.app.clientesManager.addComment(client.id, comentario);
+                    novoComentarioInput.value = '';
+                }
+            };
+            
+            addCommentBtn.addEventListener('click', addCommentHandler);
+            novoComentarioInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCommentHandler();
+                }
+            });
+        }
+
+        this.elements.clientDetailsSection.querySelectorAll('.delete-comment-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const commentId = btn.dataset.commentId;
+                this.app.clientesManager.deleteComment(client.id, commentId);
+            });
         });
     }
 
